@@ -45,14 +45,28 @@ __site__= "http://yoyzhou.github.com"
 __weibo__= "@pigdata"
 __version__="0.1 beta"
 
+##公司代理设置
+enable_proxy = True
+proxy_handler = urllib2.ProxyHandler({"http" : 'http://10.1.2.188:80'})
+null_proxy_handler = urllib2.ProxyHandler({})
+
+if enable_proxy:
+    opener = urllib2.build_opener(proxy_handler)
+else:
+    opener = urllib2.build_opener(null_proxy_handler)
+
+urllib2.install_opener(opener)
+print 'sucessfully set the proxy!'
 
 def get_prelogin_status(username):
     """
     Perform prelogin action, get prelogin status, including servertime, nonce, rsakv, etc.
     """
+    #该变量的值请使用HTTPFOX工具 在微薄登录首页进行调试获取  
+    #2014-04-16 http://login.sina.com.cn/sso/prelogin.php?entry=weibo&callback=sinaSSOController.preloginCallBack&su=&rsakt=mod&client=ssologin.js(v1.4.11)&_=1397592604677
     #prelogin_url = 'http://login.sina.com.cn/sso/prelogin.php?entry=weibo&callback=sinaSSOController.preloginCallBack&client=ssologin.js(v1.4.5)'
     prelogin_url = 'http://login.sina.com.cn/sso/prelogin.php?entry=weibo&callback=sinaSSOController.preloginCallBack&su=' + get_user(username) + \
-     '&rsakt=mod&checkpin=1&client=ssologin.js(v1.4.5)';
+     '&rsakt=mod&checkpin=1&client=ssologin.js(v1.4.11)';
     data = urllib2.urlopen(prelogin_url).read()
     p = re.compile('\((.*)\)')
     
@@ -122,7 +136,7 @@ def do_login(username,pwd,cookie_file):
         'rsakv': '',
         'sp': '',
         'encoding': 'UTF-8',
-        'prelt': '45',
+        'prelt': '45', 
         'url': 'http://weibo.com/ajaxlogin.php?framelogin=1&callback=parent.sinaSSOController.feedBackUrlCallBack',
         'returntype': 'META'
         }
@@ -131,13 +145,14 @@ def do_login(username,pwd,cookie_file):
     cookie_support2 = urllib2.HTTPCookieProcessor(cookie_jar2)
     opener2         = urllib2.build_opener(cookie_support2, urllib2.HTTPHandler)
     urllib2.install_opener(opener2)
-    login_url = 'http://login.sina.com.cn/sso/login.php?client=ssologin.js(v1.4.5)'
+    login_url = 'http://login.sina.com.cn/sso/login.php?client=ssologin.js(v1.4.11)'
     try:
         servertime, nonce, rsakv = get_prelogin_status(username)
     except:
         return
     
     #Fill POST data
+    print 'starting to set login_data'
     login_data['servertime'] = servertime
     login_data['nonce'] = nonce
     login_data['su'] = get_user(username)
@@ -152,20 +167,20 @@ def do_login(username,pwd,cookie_file):
     )
     result = urllib2.urlopen(req_login)
     text = result.read()
-    p = re.compile('location\.replace\(\"(.*?)\"\)')
-    
+    p = re.compile('location\.replace\(\'(.*?)\'\)')
+    #在使用httpfox登录调试时，我获取的返回参数  location.replace('http://weibo.com 这里使用的是单引号 原来的正则中匹配的是双引号# 导致没有login_url得到 单引号本身在re中无需转义
+	#p = re.compile('location\.replace\(\B'(.*?)'\B\)') 经调试 这样子是错误的 re中非的使用\'才能表达单引号
     try:
         #Search login redirection URL
+        print 'start to get loginurl'
         login_url = p.search(text).group(1)
-        
         data = urllib2.urlopen(login_url).read()
-        
+        print 'here 174'                
         #Verify login feedback, check whether result is TRUE
         patt_feedback = 'feedBackUrlCallBack\((.*)\)'
         p = re.compile(patt_feedback, re.MULTILINE)
         
         feedback = p.search(data).group(1)
-        
         feedback_json = json.loads(feedback)
         if feedback_json['result']:
             cookie_jar2.save(cookie_file,ignore_discard=True, ignore_expires=True)
@@ -196,8 +211,8 @@ def get_pwd_rsa(pwd, servertime, nonce):
     weibo_rsa_n = 'EB2A38568661887FA180BDDB5CABD5F21C7BFD59C090CB2D245A87AC253062882729293E5506350508E7F9AA3BB77F4333231490F915F6D63C55FE2F08A49B353F444AD3993CACC02DB784ABBB8E42A9B1BBFFFB38BE18D78E87A0E41B9B8F73A928EE0CCEE1F6739884B9777E4FE9E88A1BBE495927AC4A799B3181D6442443'
     
     #e, exponent parameter of RSA public key, WEIBO uses 0x10001, which is 65537 in Decimal
+   # weibo_rsa_e = 65537 修改 RSA相关参数 参考ssologin.js中的设置
     weibo_rsa_e = 65537
-   
     message = str(servertime) + '\t' + str(nonce) + '\n' + str(pwd)
     
     #construct WEIBO RSA Publickey using n and e above, note that n is a hex string
@@ -205,7 +220,6 @@ def get_pwd_rsa(pwd, servertime, nonce):
     
     #get encrypted password
     encropy_pwd = rsa.encrypt(message, key)
-
     #trun back encrypted password binaries to hex string
     return binascii.b2a_hex(encropy_pwd)
 
@@ -218,9 +232,10 @@ def get_user(username):
 
 if __name__ == '__main__':
     
-    username = 'ur_user_name_here'
-    pwd = 'ur_password_here'
+    username = 'edwin_uestc@163.com'
+    pwd = '2509101014'
     cookie_file = 'weibo_login_cookies.dat'
+    print 'param is ok,start to login'
     
     if login(username, pwd, cookie_file):
         print 'Login WEIBO succeeded'
