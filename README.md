@@ -1,8 +1,8 @@
-SINA WEIBO Login Simulator
-A Python implementation of SINA WEIBO Login Simulator with RSA2 Encryption
+SINA WEIBO Login Simulator      
 
-使用Python模拟用户登录新浪微博，用户登录密码使用RSA2加密方式。
-==========================
+A Python implementation of SINA WEIBO Login Simulator with RSA2 Encryption
+使用Python模拟用户登录新浪微博，用户登录密码使用RSA2加密方式。    
+
 ## Prerequirement
     $ 安装python2.7 Firefox+HttpFox或类似调试工具    
 ## Configuration    
