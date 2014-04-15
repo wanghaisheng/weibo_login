@@ -236,10 +236,10 @@ def get_user(username):
 
 if __name__ == '__main__':
     
-    
-    username = 'ur_user_name_here'
-    pwd = 'ur_password_here'
+    username = 'edwin_uestc@163.com'
+    pwd = '2509101014'
     cookie_file = 'weibo_login_cookies.dat'
+    print 'param is ok,start to login'
     
     if login(username, pwd, cookie_file):
         print 'Login WEIBO succeeded'
