@@ -56,7 +56,7 @@ A Python implementation of SINA WEIBO Login Simulator with RSA2 Encryption
 
     urllib2.install_opener(opener)
     print 'sucessfully set the proxy!'
-`
+
 ## Usage
 1. 替换main方法中的username 和password
 2. `python weibo_login.py`
